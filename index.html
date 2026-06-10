@@ -1,1595 +1,801 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>SOLSTICE CIPHER — A Turing Light Jam</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap"
-      rel="stylesheet"
-    />
-    <style>
-      :root {
-        --mono: "Space Mono", monospace;
-        --disp: "Space Grotesk", sans-serif;
-        --ink: #f4f7ff;
-        --dim: #aebbd6;
-        --panel: rgba(12, 16, 34, 0.46);
-        --line: rgba(180, 200, 255, 0.18);
-        --gold: #ffd86b;
-      }
-      * {
-        box-sizing: border-box;
-        -webkit-tap-highlight-color: transparent;
-      }
-      html,
-      body {
-        height: 100%;
-      }
-      body {
-        margin: 0;
-        font-family: var(--disp);
-        color: var(--ink);
-        background: #05060f;
-        overflow: hidden;
-        user-select: none;
-        -webkit-user-select: none;
-      }
-      #bg {
-        position: fixed;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        z-index: 0;
-        display: block;
-      }
-      .vignette {
-        position: fixed;
-        inset: 0;
-        z-index: 1;
-        pointer-events: none;
-        background: radial-gradient(120% 90% at 50% 8%, transparent 40%, rgba(0, 0, 8, 0.55) 100%);
-        mix-blend-mode: multiply;
-      }
-      .grain {
-        position: fixed;
-        inset: 0;
-        z-index: 1;
-        pointer-events: none;
-        opacity: 0.05;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-      }
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>SOLSTICE CIPHER — A Turing Light Jam</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --mono:'Space Mono',monospace;
+    --disp:'Space Grotesk',sans-serif;
+    --ink:#f4f7ff;
+    --dim:#aebbd6;
+    --panel:rgba(12,16,34,.46);
+    --line:rgba(180,200,255,.18);
+    --gold:#ffd86b;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    margin:0;font-family:var(--disp);color:var(--ink);
+    background:#05060f;overflow:hidden;
+    user-select:none;-webkit-user-select:none;
+  }
+  #bg{position:fixed;inset:0;width:100%;height:100%;z-index:0;display:block}
+  .vignette{position:fixed;inset:0;z-index:1;pointer-events:none;
+    background:radial-gradient(120% 90% at 50% 8%,transparent 40%,rgba(0,0,8,.55) 100%);
+    mix-blend-mode:multiply}
+  .grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.05;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 
-      .wrap {
-        position: relative;
-        z-index: 2;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        padding: 14px 16px 12px;
-        gap: 10px;
-      }
+  .wrap{position:relative;z-index:2;height:100vh;height:100dvh;display:flex;flex-direction:column;
+    align-items:center;padding:14px 16px 12px;gap:10px}
 
-      /* HUD */
-      .hud {
-        width: 100%;
-        max-width: 760px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        justify-content: space-between;
-        flex-wrap: wrap;
-      }
-      .brand {
-        display: flex;
-        align-items: baseline;
-        gap: 10px;
-      }
-      .brand h1 {
-        font-size: clamp(16px, 2.4vw, 22px);
-        letter-spacing: 0.22em;
-        margin: 0;
-        font-weight: 700;
-      }
-      .brand .sub {
-        font-family: var(--mono);
-        font-size: 10px;
-        letter-spacing: 0.32em;
-        color: var(--gold);
-        text-transform: uppercase;
-      }
-      .stats {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-      }
-      .chip {
-        font-family: var(--mono);
-        font-size: 11px;
-        letter-spacing: 0.06em;
-        background: var(--panel);
-        border: 1px solid var(--line);
-        border-radius: 999px;
-        padding: 6px 11px;
-        display: flex;
-        gap: 7px;
-        align-items: center;
-        backdrop-filter: blur(8px);
-      }
-      .chip b {
-        color: #fff;
-        font-weight: 700;
-      }
-      .chip .lab {
-        color: var(--dim);
-        text-transform: uppercase;
-        font-size: 10px;
-        letter-spacing: 0.12em;
-      }
-      .daylight {
-        min-width: 108px;
-      }
-      .bar {
-        width: 54px;
-        height: 7px;
-        border-radius: 6px;
-        background: rgba(255, 255, 255, 0.13);
-        overflow: hidden;
-        position: relative;
-      }
-      .bar > i {
-        position: absolute;
-        inset: 0;
-        transform-origin: left;
-        background: linear-gradient(90deg, #ff8a3c, #ffd86b);
-        border-radius: 6px;
-        transition: transform 0.5s ease;
-      }
+  /* HUD */
+  .hud{width:100%;max-width:760px;display:flex;align-items:center;gap:10px;
+    justify-content:space-between;flex-wrap:wrap}
+  .brand{display:flex;align-items:baseline;gap:10px}
+  .brand h1{font-size:clamp(16px,2.4vw,22px);letter-spacing:.22em;margin:0;font-weight:700}
+  .brand .sub{font-family:var(--mono);font-size:10px;letter-spacing:.32em;color:var(--gold);text-transform:uppercase}
+  .stats{display:flex;gap:8px;flex-wrap:wrap}
+  .chip{font-family:var(--mono);font-size:11px;letter-spacing:.06em;
+    background:var(--panel);border:1px solid var(--line);border-radius:999px;
+    padding:6px 11px;display:flex;gap:7px;align-items:center;backdrop-filter:blur(8px)}
+  .chip b{color:#fff;font-weight:700}
+  .chip .lab{color:var(--dim);text-transform:uppercase;font-size:10px;letter-spacing:.12em}
+  .daylight{min-width:108px}
+  .bar{width:54px;height:7px;border-radius:6px;background:rgba(255,255,255,.13);overflow:hidden;position:relative}
+  .bar > i{position:absolute;inset:0;transform-origin:left;
+    background:linear-gradient(90deg,#ff8a3c,#ffd86b);border-radius:6px;transition:transform .5s ease}
 
-      /* Board */
-      .board {
-        width: 100%;
-        max-width: 760px;
-        flex: 1;
-        min-height: 0;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        background: var(--panel);
-        border: 1px solid var(--line);
-        border-radius: 18px;
-        padding: 14px 16px;
-        backdrop-filter: blur(10px);
-        box-shadow:
-          0 24px 60px rgba(0, 0, 10, 0.45),
-          inset 0 1px 0 rgba(255, 255, 255, 0.06);
-      }
+  /* Board */
+  .board{width:100%;max-width:760px;flex:1;min-height:0;display:flex;flex-direction:column;gap:10px;
+    background:var(--panel);border:1px solid var(--line);border-radius:18px;
+    padding:14px 16px;backdrop-filter:blur(10px);
+    box-shadow:0 24px 60px rgba(0,0,10,.45),inset 0 1px 0 rgba(255,255,255,.06)}
 
-      .codeRow {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        justify-content: center;
-        padding-bottom: 12px;
-        border-bottom: 1px dashed var(--line);
-      }
-      .codeRow .tag {
-        font-family: var(--mono);
-        font-size: 10px;
-        letter-spacing: 0.2em;
-        color: var(--gold);
-        text-transform: uppercase;
-      }
-      .codeSlots {
-        display: flex;
-        gap: 8px;
-      }
+  .codeRow{display:flex;align-items:center;gap:12px;justify-content:center;
+    padding-bottom:12px;border-bottom:1px dashed var(--line)}
+  .codeRow .tag{font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--gold);text-transform:uppercase}
+  .codeSlots{display:flex;gap:8px}
 
-      .history {
-        flex: 1;
-        min-height: 0;
-        overflow-y: auto;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        padding: 6px 4px 2px;
-        scrollbar-width: thin;
-        scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
-      }
-      .history::-webkit-scrollbar {
-        width: 7px;
-      }
-      .history::-webkit-scrollbar-thumb {
-        background: rgba(255, 255, 255, 0.2);
-        border-radius: 6px;
-      }
+  .history{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:8px;
+    padding:6px 4px 2px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.25) transparent}
+  .history::-webkit-scrollbar{width:7px}
+  .history::-webkit-scrollbar-thumb{background:rgba(255,255,255,.2);border-radius:6px}
 
-      .row {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        justify-content: center;
-        opacity: 0;
-        transform: translateY(6px);
-        animation: rise 0.32s ease forwards;
-      }
-      @keyframes rise {
-        to {
-          opacity: 1;
-          transform: none;
-        }
-      }
-      .row .num {
-        font-family: var(--mono);
-        font-size: 11px;
-        color: var(--dim);
-        width: 22px;
-        text-align: right;
-      }
-      .slots {
-        display: flex;
-        gap: 8px;
-      }
+  .row{display:flex;align-items:center;gap:12px;justify-content:center;
+    opacity:0;transform:translateY(6px);animation:rise .32s ease forwards}
+  @keyframes rise{to{opacity:1;transform:none}}
+  .row .num{font-family:var(--mono);font-size:11px;color:var(--dim);width:22px;text-align:right}
+  .slots{display:flex;gap:8px}
 
-      .orb {
-        --c: #888;
-        --g: #bbb;
-        width: clamp(30px, 6.2vw, 42px);
-        height: clamp(30px, 6.2vw, 42px);
-        border-radius: 50%;
-        display: grid;
-        place-items: center;
-        position: relative;
-        font-family: var(--mono);
-        font-weight: 700;
-        font-size: clamp(11px, 2vw, 14px);
-        color: rgba(0, 0, 0, 0.55);
-        background: radial-gradient(circle at 32% 28%, var(--g), var(--c) 70%);
-        box-shadow:
-          0 0 0 1px rgba(255, 255, 255, 0.2) inset,
-          0 4px 12px rgba(0, 0, 0, 0.35),
-          0 0 14px -2px var(--c);
-        transition: transform 0.12s ease;
-      }
-      .orb.empty {
-        background: rgba(255, 255, 255, 0.05);
-        box-shadow: 0 0 0 1px var(--line) inset;
-        color: transparent;
-      }
-      .orb.mask {
-        background: repeating-linear-gradient(
-          45deg,
-          rgba(255, 255, 255, 0.08) 0 6px,
-          rgba(255, 255, 255, 0.03) 6px 12px
-        );
-        box-shadow: 0 0 0 1px var(--line) inset;
-        color: var(--dim);
-        font-size: 15px;
-      }
-      .orb.active {
-        transform: translateY(-4px) scale(1.06);
-        box-shadow:
-          0 0 0 2px var(--gold) inset,
-          0 0 18px 1px var(--gold),
-          0 6px 16px rgba(0, 0, 0, 0.4);
-      }
-      .orb.locked::after {
-        content: "";
-        position: absolute;
-        top: -4px;
-        right: -4px;
-        width: 13px;
-        height: 13px;
-        border-radius: 50%;
-        background: var(--gold);
-        box-shadow: 0 0 8px var(--gold);
-        -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5m0 2a3 3 0 0 1 3 3v3H9V6a3 3 0 0 1 3-3'/%3E%3C/svg%3E")
-          center/contain no-repeat;
-        mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5m0 2a3 3 0 0 1 3 3v3H9V6a3 3 0 0 1 3-3'/%3E%3C/svg%3E")
-          center/contain no-repeat;
-      }
+  .orb{--c:#888;--g:#bbb;width:clamp(30px,6.2vw,42px);height:clamp(30px,6.2vw,42px);border-radius:50%;
+    display:grid;place-items:center;position:relative;font-family:var(--mono);font-weight:700;
+    font-size:clamp(11px,2vw,14px);color:rgba(0,0,0,.55);
+    background:radial-gradient(circle at 32% 28%,var(--g),var(--c) 70%);
+    box-shadow:0 0 0 1px rgba(255,255,255,.2) inset,0 4px 12px rgba(0,0,0,.35),0 0 14px -2px var(--c);
+    transition:transform .12s ease}
+  .orb.empty{background:rgba(255,255,255,.05);box-shadow:0 0 0 1px var(--line) inset;color:transparent}
+  .orb.mask{background:repeating-linear-gradient(45deg,rgba(255,255,255,.08) 0 6px,rgba(255,255,255,.03) 6px 12px);
+    box-shadow:0 0 0 1px var(--line) inset;color:var(--dim);font-size:15px}
+  .orb.active{transform:translateY(-4px) scale(1.06);
+    box-shadow:0 0 0 2px var(--gold) inset,0 0 18px 1px var(--gold),0 6px 16px rgba(0,0,0,.4)}
+  .orb.locked::after{content:'';position:absolute;top:-4px;right:-4px;width:13px;height:13px;border-radius:50%;
+    background:var(--gold);box-shadow:0 0 8px var(--gold);
+    -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5m0 2a3 3 0 0 1 3 3v3H9V6a3 3 0 0 1 3-3'/%3E%3C/svg%3E") center/contain no-repeat;
+            mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5m0 2a3 3 0 0 1 3 3v3H9V6a3 3 0 0 1 3-3'/%3E%3C/svg%3E") center/contain no-repeat}
 
-      .marker {
-        height: 10px;
-        display: flex;
-        gap: 8px;
-        justify-content: center;
-      }
-      .marker .m {
-        width: clamp(30px, 6.2vw, 42px);
-        display: grid;
-        place-items: center;
-        color: var(--gold);
-        font-size: 11px;
-        opacity: 0;
-      }
-      .marker .m.on {
-        opacity: 1;
-        animation: bob 1s ease-in-out infinite;
-      }
-      @keyframes bob {
-        50% {
-          transform: translateY(2px);
-        }
-      }
+  .marker{height:10px;display:flex;gap:8px;justify-content:center}
+  .marker .m{width:clamp(30px,6.2vw,42px);display:grid;place-items:center;color:var(--gold);font-size:11px;opacity:0}
+  .marker .m.on{opacity:1;animation:bob 1s ease-in-out infinite}
+  @keyframes bob{50%{transform:translateY(2px)}}
 
-      .pegs {
-        width: 46px;
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 3px;
-        justify-items: center;
-        align-content: center;
-      }
-      .peg {
-        width: 9px;
-        height: 9px;
-        border-radius: 50%;
-      }
-      .peg.exact {
-        background: var(--gold);
-        box-shadow: 0 0 6px var(--gold);
-      }
-      .peg.partial {
-        background: transparent;
-        border: 1.5px solid rgba(255, 255, 255, 0.7);
-      }
-      .peg.none {
-        background: rgba(255, 255, 255, 0.08);
-      }
+  .pegs{width:46px;display:grid;grid-template-columns:repeat(3,1fr);gap:3px;justify-items:center;align-content:center}
+  .peg{width:9px;height:9px;border-radius:50%}
+  .peg.exact{background:var(--gold);box-shadow:0 0 6px var(--gold)}
+  .peg.partial{background:transparent;border:1.5px solid rgba(255,255,255,.7)}
+  .peg.none{background:rgba(255,255,255,.08)}
 
-      .editRow {
-        padding-top: 10px;
-        border-top: 1px dashed var(--line);
-      }
+  .editRow{padding-top:10px;border-top:1px dashed var(--line)}
 
-      /* Footer */
-      .foot {
-        width: 100%;
-        max-width: 760px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 10px;
-        flex-wrap: wrap;
-      }
-      .palette {
-        display: flex;
-        gap: 7px;
-        flex-wrap: wrap;
-      }
-      .key {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        font-family: var(--mono);
-        font-size: 10px;
-        color: var(--dim);
-      }
-      .key .kb {
-        display: inline-grid;
-        place-items: center;
-        min-width: 16px;
-        height: 16px;
-        border-radius: 4px;
-        background: rgba(255, 255, 255, 0.08);
-        border: 1px solid var(--line);
-        color: #fff;
-        font-size: 10px;
-        padding: 0 3px;
-      }
-      .key .dot {
-        width: 13px;
-        height: 13px;
-        border-radius: 50%;
-      }
-      .help {
-        font-family: var(--mono);
-        font-size: 10.5px;
-        color: var(--dim);
-        letter-spacing: 0.02em;
-        line-height: 1.7;
-        text-align: right;
-      }
-      .help b {
-        color: #fff;
-      }
-      .help .kb {
-        display: inline-grid;
-        place-items: center;
-        min-width: 16px;
-        height: 16px;
-        border-radius: 4px;
-        background: rgba(255, 255, 255, 0.08);
-        border: 1px solid var(--line);
-        color: #fff;
-        font-size: 10px;
-        padding: 0 4px;
-        margin: 0 1px;
-      }
+  /* Footer */
+  .foot{width:100%;max-width:760px;display:flex;align-items:center;justify-content:space-between;
+    gap:10px;flex-wrap:wrap}
+  .palette{display:flex;gap:7px;flex-wrap:wrap}
+  .key{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;color:var(--dim)}
+  .key .kb{display:inline-grid;place-items:center;min-width:16px;height:16px;border-radius:4px;
+    background:rgba(255,255,255,.08);border:1px solid var(--line);color:#fff;font-size:10px;padding:0 3px}
+  .key .dot{width:13px;height:13px;border-radius:50%}
+  .help{font-family:var(--mono);font-size:10.5px;color:var(--dim);letter-spacing:.02em;line-height:1.7;text-align:right}
+  .help b{color:#fff}
+  .help .kb{display:inline-grid;place-items:center;min-width:16px;height:16px;border-radius:4px;
+    background:rgba(255,255,255,.08);border:1px solid var(--line);color:#fff;font-size:10px;padding:0 4px;margin:0 1px}
 
-      /* Overlays */
-      .overlay {
-        position: fixed;
-        inset: 0;
-        z-index: 5;
-        display: none;
-        align-items: center;
-        justify-content: center;
-        padding: 22px;
-        background: radial-gradient(120% 90% at 50% 30%, rgba(8, 10, 28, 0.72), rgba(3, 4, 12, 0.92));
-      }
-      .overlay.show {
-        display: flex;
-        animation: fade 0.4s ease;
-      }
-      @keyframes fade {
-        from {
-          opacity: 0;
-        }
-      }
-      .card {
-        width: min(560px, 94vw);
-        background: linear-gradient(180deg, rgba(20, 24, 48, 0.86), rgba(10, 12, 28, 0.92));
-        border: 1px solid var(--line);
-        border-radius: 22px;
-        padding: 30px 30px 26px;
-        text-align: center;
-        box-shadow:
-          0 40px 90px rgba(0, 0, 0, 0.6),
-          inset 0 1px 0 rgba(255, 255, 255, 0.08);
-        backdrop-filter: blur(14px);
-      }
-      .card .kicker {
-        font-family: var(--mono);
-        font-size: 11px;
-        letter-spacing: 0.34em;
-        color: var(--gold);
-        text-transform: uppercase;
-      }
-      .card h2 {
-        font-size: clamp(26px, 5.5vw, 40px);
-        margin: 0.32em 0 0.12em;
-        letter-spacing: 0.04em;
-        line-height: 1.02;
-      }
-      .card p {
-        color: var(--dim);
-        font-size: 14px;
-        line-height: 1.65;
-        margin: 0.5em auto;
-        max-width: 46ch;
-      }
-      .card .lead {
-        color: #dfe6f7;
-      }
-      .narr {
-        font-family: var(--mono);
-        font-size: 12.5px;
-        color: #c7d2ec;
-        line-height: 1.8;
-        text-align: left;
-        background: rgba(0, 0, 0, 0.28);
-        border: 1px solid var(--line);
-        border-radius: 12px;
-        padding: 14px 16px;
-        margin: 16px 0;
-      }
-      .narr .em {
-        color: var(--gold);
-      }
-      .ctrl {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px 18px;
-        justify-content: center;
-        font-family: var(--mono);
-        font-size: 11.5px;
-        color: var(--dim);
-        margin: 14px 0 6px;
-      }
-      .ctrl span {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-      }
-      .kb2 {
-        display: inline-grid;
-        place-items: center;
-        min-width: 20px;
-        height: 20px;
-        border-radius: 5px;
-        background: rgba(255, 255, 255, 0.09);
-        border: 1px solid var(--line);
-        color: #fff;
-        font-size: 11px;
-        padding: 0 5px;
-      }
-      .cta {
-        margin-top: 18px;
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        font-family: var(--mono);
-        font-size: 13px;
-        letter-spacing: 0.12em;
-        color: #08111f;
-        background: linear-gradient(90deg, #ffd86b, #ff9f43);
-        border: none;
-        border-radius: 999px;
-        padding: 13px 26px;
-        font-weight: 700;
-        cursor: pointer;
-        text-transform: uppercase;
-        box-shadow: 0 10px 30px -6px rgba(255, 180, 80, 0.5);
-        transition: transform 0.12s ease;
-      }
-      .cta:hover {
-        transform: translateY(-2px);
-      }
-      .cta .pulse {
-        animation: pp 1.4s ease-in-out infinite;
-      }
-      @keyframes pp {
-        50% {
-          opacity: 0.45;
-        }
-      }
-      .scoreLine {
-        font-family: var(--mono);
-        font-size: 13px;
-        color: #dfe6f7;
-        margin: 6px 0;
-        line-height: 1.9;
-      }
-      .scoreLine .v {
-        color: var(--gold);
-        font-weight: 700;
-      }
-      .codeReveal {
-        display: flex;
-        gap: 8px;
-        justify-content: center;
-        margin: 14px 0 4px;
-      }
+  /* Overlays */
+  .overlay{position:fixed;inset:0;z-index:5;display:none;align-items:center;justify-content:center;padding:16px;
+    background:radial-gradient(120% 90% at 50% 30%,rgba(8,10,28,.72),rgba(3,4,12,.92))}
+  .overlay.show{display:flex;animation:fade .4s ease}
+  @keyframes fade{from{opacity:0}}
+  .card{width:min(560px,94vw);max-height:calc(100vh - 28px);max-height:calc(100dvh - 28px);overflow-y:auto;
+    -webkit-overflow-scrolling:touch;background:linear-gradient(180deg,rgba(20,24,48,.86),rgba(10,12,28,.92));
+    border:1px solid var(--line);border-radius:22px;padding:30px 30px 26px;text-align:center;
+    box-shadow:0 40px 90px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.08);backdrop-filter:blur(14px)}
+  .card .kicker{font-family:var(--mono);font-size:11px;letter-spacing:.34em;color:var(--gold);text-transform:uppercase}
+  .card h2{font-size:clamp(26px,5.5vw,40px);margin:.32em 0 .12em;letter-spacing:.04em;line-height:1.02}
+  .card p{color:var(--dim);font-size:14px;line-height:1.65;margin:.5em auto;max-width:46ch}
+  .card .lead{color:#dfe6f7}
+  .narr{font-family:var(--mono);font-size:12.5px;color:#c7d2ec;line-height:1.8;text-align:left;
+    background:rgba(0,0,0,.28);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:16px 0}
+  .narr .em{color:var(--gold)}
+  .ctrl{display:flex;flex-wrap:wrap;gap:8px 18px;justify-content:center;font-family:var(--mono);
+    font-size:11.5px;color:var(--dim);margin:14px 0 6px}
+  .ctrl span{display:flex;align-items:center;gap:6px}
+  .kb2{display:inline-grid;place-items:center;min-width:20px;height:20px;border-radius:5px;
+    background:rgba(255,255,255,.09);border:1px solid var(--line);color:#fff;font-size:11px;padding:0 5px}
+  .cta{margin-top:18px;display:inline-flex;align-items:center;gap:10px;font-family:var(--mono);
+    font-size:13px;letter-spacing:.12em;color:#08111f;background:linear-gradient(90deg,#ffd86b,#ff9f43);
+    border:none;border-radius:999px;padding:13px 26px;font-weight:700;cursor:pointer;text-transform:uppercase;
+    box-shadow:0 10px 30px -6px rgba(255,180,80,.5);transition:transform .12s ease}
+  .cta:hover{transform:translateY(-2px)}
+  .cta .pulse{animation:pp 1.4s ease-in-out infinite}
+  @keyframes pp{50%{opacity:.45}}
+  .scoreLine{font-family:var(--mono);font-size:13px;color:#dfe6f7;margin:6px 0;line-height:1.9}
+  .scoreLine .v{color:var(--gold);font-weight:700}
+  .codeReveal{display:flex;gap:8px;justify-content:center;margin:14px 0 4px}
 
-      .toast {
-        position: fixed;
-        left: 50%;
-        top: 14px;
-        transform: translateX(-50%) translateY(-20px);
-        z-index: 6;
-        font-family: var(--mono);
-        font-size: 12px;
-        letter-spacing: 0.05em;
-        color: #08111f;
-        background: var(--gold);
-        padding: 8px 16px;
-        border-radius: 999px;
-        opacity: 0;
-        pointer-events: none;
-        transition: 0.3s;
-        font-weight: 700;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-      }
-      .toast.show {
-        opacity: 1;
-        transform: translateX(-50%) translateY(0);
-      }
+  .toast{position:fixed;left:50%;top:14px;transform:translateX(-50%) translateY(-20px);z-index:6;
+    font-family:var(--mono);font-size:12px;letter-spacing:.05em;color:#08111f;background:var(--gold);
+    padding:8px 16px;border-radius:999px;opacity:0;pointer-events:none;transition:.3s;font-weight:700;
+    box-shadow:0 8px 24px rgba(0,0,0,.4)}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-      .mute {
-        position: fixed;
-        right: 14px;
-        bottom: 12px;
-        z-index: 6;
-        font-family: var(--mono);
-        font-size: 11px;
-        background: var(--panel);
-        border: 1px solid var(--line);
-        color: var(--dim);
-        border-radius: 999px;
-        padding: 7px 13px;
-        cursor: pointer;
-        backdrop-filter: blur(8px);
-      }
+  .mute{position:fixed;right:14px;bottom:12px;z-index:6;font-family:var(--mono);font-size:11px;
+    background:var(--panel);border:1px solid var(--line);color:var(--dim);border-radius:999px;
+    padding:7px 13px;cursor:pointer;backdrop-filter:blur(8px)}
 
-      @media (max-height: 620px) {
-        .narr {
-          display: none;
-        }
-        .card {
-          padding: 22px 24px;
-        }
-      }
-      @media (max-width: 560px) {
-        .help {
-          display: none;
-        }
-        .foot {
-          justify-content: center;
-        }
-      }
-    </style>
-    <style>
-      .ha-img-placeholder {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-direction: column;
-        gap: 6px;
-        background: #f4f4f5;
-        border: 1px dashed #d4d4d8;
-        border-radius: 8px;
-        color: #71717a;
-        font-size: 12px;
-        font-family: system-ui, sans-serif;
-        min-height: 80px;
-        padding: 16px;
-        box-sizing: border-box;
-        animation: ha-img-pulse 1.5s ease-in-out infinite;
-      }
-      .ha-img-placeholder.ha-failed {
-        animation: none;
-        opacity: 0.7;
-      }
-      @keyframes ha-img-pulse {
-        0%,
-        100% {
-          opacity: 1;
-        }
-        50% {
-          opacity: 0.5;
-        }
-      }
-      @media (prefers-color-scheme: dark) {
-        .ha-img-placeholder {
-          background: #27272a;
-          border-color: #3f3f46;
-          color: #a1a1aa;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <canvas id="bg"></canvas>
-    <div class="vignette"></div>
-    <div class="grain"></div>
+  /* ---------- touch / on-screen controls ---------- */
+  .orb,.key,.tbtn,.cta,.mute,button{touch-action:manipulation}
+  .orb,.key{cursor:pointer}
+  .touchbar{display:none;width:100%;max-width:760px;gap:10px;justify-content:center}
+  .tbtn{flex:1;max-width:190px;font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:.06em;
+    text-transform:uppercase;padding:14px 8px;border-radius:14px;border:1px solid var(--line);
+    background:var(--panel);color:#fff;backdrop-filter:blur(8px);cursor:pointer;transition:transform .1s ease}
+  .tbtn.primary{background:linear-gradient(90deg,#ffd86b,#ff9f43);color:#08111f;border:none;
+    box-shadow:0 8px 22px -6px rgba(255,180,80,.5)}
+  .tbtn:active{transform:translateY(1px) scale(.99)}
+  .touchhint{display:none;color:#dfe6f7;font-size:13.5px;line-height:1.6;margin:14px auto 2px;max-width:42ch}
+  .touchhint b{color:var(--gold)}
+  body.touch .touchbar{display:flex}
+  body.touch .help{display:none}
+  body.touch .ctrl{display:none}
+  body.touch .touchhint{display:block}
 
-    <div class="wrap">
-      <div class="hud">
-        <div class="brand">
-          <h1>SOLSTICE&nbsp;CIPHER</h1>
-          <span class="sub">// the bombe at dusk</span>
-        </div>
-        <div class="stats">
-          <div class="chip daylight">
-            <span class="lab">Daylight</span>
-            <span class="bar"><i id="dayfill"></i></span>
-            <b id="daynum">10</b>
-          </div>
-          <div class="chip">
-            <span class="lab">Level</span>
-            <b id="lvl">1</b>
-          </div>
-          <div class="chip">
-            <span class="lab">Bombe</span>
-            <b id="bombe">◇◇</b>
-          </div>
-          <div class="chip">
-            <span class="lab">Score</span>
-            <b id="score">0</b>
-          </div>
-          <div class="chip">
-            <span class="lab">Best</span>
-            <b id="best">0</b>
-          </div>
-        </div>
+  @media (max-height:620px){
+    .narr{display:none}
+    .card{padding:22px 24px}
+  }
+  @media (max-width:600px){
+    .wrap{padding:10px 10px}
+    .brand .sub{display:none}
+    .brand h1{font-size:16px;letter-spacing:.12em}
+    .stats{gap:6px}
+    .chip{padding:5px 9px}
+    .help{display:none}
+    .touchbar{display:flex}
+    .foot{justify-content:center;gap:8px}
+    .palette{gap:8px;justify-content:center;width:100%}
+    .key{padding:7px 9px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+    .key .nm{display:none}
+    .key .dot{width:16px;height:16px}
+    .codeRow .tag{font-size:9px}
+    .orb{width:clamp(28px,8.6vw,40px);height:clamp(28px,8.6vw,40px)}
+    .marker .m{width:clamp(28px,8.6vw,40px)}
+  }
+</style>
+<style>
+.ha-img-placeholder{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;background:#f4f4f5;border:1px dashed #d4d4d8;border-radius:8px;color:#71717a;font-size:12px;font-family:system-ui,sans-serif;min-height:80px;padding:16px;box-sizing:border-box;animation:ha-img-pulse 1.5s ease-in-out infinite}
+.ha-img-placeholder.ha-failed{animation:none;opacity:.7}
+@keyframes ha-img-pulse{0%,100%{opacity:1}50%{opacity:.5}}
+@media(prefers-color-scheme:dark){.ha-img-placeholder{background:#27272a;border-color:#3f3f46;color:#a1a1aa}}
+</style>
+</head>
+<body>
+  <canvas id="bg"></canvas>
+  <div class="vignette"></div>
+  <div class="grain"></div>
+
+  <div class="wrap">
+    <div class="hud">
+      <div class="brand">
+        <h1>SOLSTICE&nbsp;CIPHER</h1>
+        <span class="sub">// the bombe at dusk</span>
       </div>
-
-      <div class="board">
-        <div class="codeRow">
-          <span class="tag">Signal</span>
-          <div class="codeSlots" id="codeSlots"></div>
-          <span class="tag">encrypted</span>
-        </div>
-        <div class="history" id="history"></div>
-        <div class="editRow">
-          <div class="row" style="animation: none; opacity: 1">
-            <span class="num">»</span>
-            <div class="slots" id="editSlots"></div>
-            <div class="pegs"></div>
-          </div>
-          <div class="marker" id="marker"></div>
-        </div>
-      </div>
-
-      <div class="foot">
-        <div class="palette" id="palette"></div>
-        <div class="help">
-          <b>←→</b>
-          slot &nbsp;
-          <b>↑↓</b>
-          color &nbsp;
-          <span class="kb">1</span>
-          –
-          <span class="kb">6</span>
-          set
-          <br />
-          <span class="kb">↵</span>
-          decrypt &nbsp;
-          <span class="kb">B</span>
-          bombe &nbsp;
-          <span class="kb">R</span>
-          reset &nbsp;
-          <span class="kb">M</span>
-          mute
-        </div>
+      <div class="stats">
+        <div class="chip daylight"><span class="lab">Daylight</span>
+          <span class="bar"><i id="dayfill"></i></span><b id="daynum">10</b></div>
+        <div class="chip"><span class="lab">Level</span><b id="lvl">1</b></div>
+        <div class="chip"><span class="lab">Bombe</span><b id="bombe">◇◇</b></div>
+        <div class="chip"><span class="lab">Score</span><b id="score">0</b></div>
+        <div class="chip"><span class="lab">Best</span><b id="best">0</b></div>
       </div>
     </div>
 
-    <!-- START -->
-    <div class="overlay show" id="ovStart">
-      <div class="card">
-        <div class="kicker">June 21 · The Longest Day</div>
-        <h2>SOLSTICE CIPHER</h2>
-        <p class="lead">A code-breaking game of light and deduction — an ode to Alan Turing.</p>
-        <div class="narr">
-          At the solstice observatory the
-          <span class="em">Bombe</span>
-          hums to life. A scrambled light-signal pulses from the horizon — six colors of the spectrum, locked in a
-          hidden order.
-          <br />
-          <br />
-          Decrypt the sequence before the sun sets. Every guess spends an hour of daylight; when the last light dies,
-          <span class="em">darkness wins</span>
-          .
-          <br />
-          <br />
-          In the birth-month of the man who broke Enigma,
-          <span class="em">deduction is your light.</span>
+    <div class="board">
+      <div class="codeRow">
+        <span class="tag">Signal</span>
+        <div class="codeSlots" id="codeSlots"></div>
+        <span class="tag">encrypted</span>
+      </div>
+      <div class="history" id="history"></div>
+      <div class="editRow">
+        <div class="row" style="animation:none;opacity:1">
+          <span class="num">»</span>
+          <div class="slots" id="editSlots"></div>
+          <div class="pegs"></div>
         </div>
-        <div class="ctrl">
-          <span>
-            <span class="kb2">←</span>
-            <span class="kb2">→</span>
-            move slot
-          </span>
-          <span>
-            <span class="kb2">↑</span>
-            <span class="kb2">↓</span>
-            or
-            <span class="kb2">1-6</span>
-            color
-          </span>
-          <span>
-            <span class="kb2">↵</span>
-            decrypt
-          </span>
-          <span>
-            <span class="kb2">B</span>
-            bombe assist
-          </span>
-        </div>
-        <button class="cta" id="startBtn">
-          Begin the Decrypt
-          <span class="pulse">↵</span>
-        </button>
+        <div class="marker" id="marker"></div>
       </div>
     </div>
 
-    <!-- WIN -->
-    <div class="overlay" id="ovWin">
-      <div class="card">
-        <div class="kicker">Signal Decrypted</div>
-        <h2 id="winTitle">The Beacon Fires</h2>
-        <div class="codeReveal" id="winReveal"></div>
-        <div class="scoreLine" id="winScore"></div>
-        <p>The light holds a little longer. A new signal forms on the horizon.</p>
-        <button class="cta" id="nextBtn">
-          Next Signal
-          <span class="pulse">↵</span>
-        </button>
+    <div class="foot">
+      <div class="palette" id="palette"></div>
+      <div class="help">
+        <b>←→</b> slot &nbsp; <b>↑↓</b> color &nbsp; <span class="kb">1</span>–<span class="kb">6</span> set<br>
+        <span class="kb">↵</span> decrypt &nbsp; <span class="kb">B</span> bombe &nbsp; <span class="kb">R</span> reset &nbsp; <span class="kb">M</span> mute
       </div>
     </div>
 
-    <!-- LOSE -->
-    <div class="overlay" id="ovLose">
-      <div class="card">
-        <div class="kicker">Nightfall</div>
-        <h2>Darkness Wins</h2>
-        <p class="lead">The sun set before the cipher broke. The signal was:</p>
-        <div class="codeReveal" id="loseReveal"></div>
-        <div class="scoreLine" id="loseScore"></div>
-        <button class="cta" id="retryBtn">
-          Chase the Dawn
-          <span class="pulse">↵</span>
-        </button>
-      </div>
+    <div class="touchbar" id="touchbar">
+      <button class="tbtn" data-act="bombe">◆ Bombe</button>
+      <button class="tbtn primary" data-act="submit">⚡ Decrypt</button>
+      <button class="tbtn" data-act="reset">↺ New</button>
     </div>
+  </div>
 
-    <div class="toast" id="toast"></div>
-    <button class="mute" id="muteBtn">♪ sound on</button>
+  <!-- START -->
+  <div class="overlay show" id="ovStart">
+    <div class="card">
+      <div class="kicker">June 21 · The Longest Day</div>
+      <h2>SOLSTICE CIPHER</h2>
+      <p class="lead">A code-breaking game of light and deduction — an ode to Alan Turing.</p>
+      <div class="narr">
+        At the solstice observatory the <span class="em">Bombe</span> hums to life. A scrambled
+        light-signal pulses from the horizon — six colors of the spectrum, locked in a hidden order.<br><br>
+        Decrypt the sequence before the sun sets. Every guess spends an hour of daylight; when the
+        last light dies, <span class="em">darkness wins</span>.<br><br>
+        In the birth-month of the man who broke Enigma, <span class="em">deduction is your light.</span>
+      </div>
+      <div class="ctrl">
+        <span><span class="kb2">←</span><span class="kb2">→</span> move slot</span>
+        <span><span class="kb2">↑</span><span class="kb2">↓</span> or <span class="kb2">1-6</span> color</span>
+        <span><span class="kb2">↵</span> decrypt</span>
+        <span><span class="kb2">B</span> bombe assist</span>
+      </div>
+      <p class="touchhint">📱 Tap a slot, tap a color below to set it, then tap <b>⚡ Decrypt</b>. Need help? Tap <b>◆ Bombe</b>.</p>
+      <button class="cta" id="startBtn">Begin the Decrypt <span class="pulse">↵</span></button>
+    </div>
+  </div>
 
-    <script>
-      (() => {
-        "use strict";
+  <!-- WIN -->
+  <div class="overlay" id="ovWin">
+    <div class="card">
+      <div class="kicker">Signal Decrypted</div>
+      <h2 id="winTitle">The Beacon Fires</h2>
+      <div class="codeReveal" id="winReveal"></div>
+      <div class="scoreLine" id="winScore"></div>
+      <p>The light holds a little longer. A new signal forms on the horizon.</p>
+      <button class="cta" id="nextBtn">Next Signal <span class="pulse">↵</span></button>
+    </div>
+  </div>
 
-        /* ---------- Palette: the six-color light spectrum (a quiet nod to Pride) ---------- */
-        const PALETTE = [
-          { n: "1", name: "Red", c: "#ff4d57", g: "#ff9aa0" },
-          { n: "2", name: "Orange", c: "#ff9f1c", g: "#ffc56b" },
-          { n: "3", name: "Yellow", c: "#ffd400", g: "#fff07a" },
-          { n: "4", name: "Green", c: "#37d399", g: "#86f0c4" },
-          { n: "5", name: "Blue", c: "#3a9bff", g: "#8cc6ff" },
-          { n: "6", name: "Violet", c: "#b06bff", g: "#d6aaff" },
-        ];
-        const NCOL = PALETTE.length;
-        const rint = n => Math.floor(Math.random() * n);
+  <!-- LOSE -->
+  <div class="overlay" id="ovLose">
+    <div class="card">
+      <div class="kicker">Nightfall</div>
+      <h2>Darkness Wins</h2>
+      <p class="lead">The sun set before the cipher broke. The signal was:</p>
+      <div class="codeReveal" id="loseReveal"></div>
+      <div class="scoreLine" id="loseScore"></div>
+      <button class="cta" id="retryBtn">Chase the Dawn <span class="pulse">↵</span></button>
+    </div>
+  </div>
 
-        /* ---------- State ---------- */
-        let level,
-          codeLen,
-          maxGuesses,
-          code,
-          guesses,
-          current,
-          activeSlot,
-          bombeMax,
-          bombeLeft,
-          locked,
-          totalScore,
-          screen;
-        // safe storage — published artifacts run in a sandboxed iframe that may block localStorage
-        const store = {
-          get(k) {
-            try {
-              return localStorage.getItem(k);
-            } catch (e) {
-              return null;
-            }
-          },
-          set(k, v) {
-            try {
-              localStorage.setItem(k, v);
-            } catch (e) {}
-          },
-        };
-        let best = +(store.get("solstice_best") || 0);
+  <div class="toast" id="toast"></div>
+  <button class="mute" id="muteBtn">♪ sound on</button>
 
-        const $ = id => document.getElementById(id);
-        const els = {
-          codeSlots: $("codeSlots"),
-          history: $("history"),
-          editSlots: $("editSlots"),
-          marker: $("marker"),
-          palette: $("palette"),
-          dayfill: $("dayfill"),
-          daynum: $("daynum"),
-          lvl: $("lvl"),
-          bombe: $("bombe"),
-          score: $("score"),
-          best: $("best"),
-          toast: $("toast"),
-          ovStart: $("ovStart"),
-          ovWin: $("ovWin"),
-          ovLose: $("ovLose"),
-          winReveal: $("winReveal"),
-          winScore: $("winScore"),
-          winTitle: $("winTitle"),
-          loseReveal: $("loseReveal"),
-          loseScore: $("loseScore"),
-        };
-        els.best.textContent = best;
+<script>
+(() => {
+  "use strict";
 
-        /* ---------- Orb factory ---------- */
-        function orb(ci, opt = {}) {
-          const d = document.createElement("div");
-          d.className = "orb";
-          if (opt.empty) {
-            d.classList.add("empty");
-            return d;
-          }
-          if (opt.mask) {
-            d.classList.add("mask");
-            d.textContent = "?";
-            return d;
-          }
-          const p = PALETTE[ci];
-          d.style.setProperty("--c", p.c);
-          d.style.setProperty("--g", p.g);
-          d.textContent = p.n;
-          if (opt.active) d.classList.add("active");
-          if (opt.locked) d.classList.add("locked");
-          return d;
-        }
+  /* ---------- Palette: the six-color light spectrum (a quiet nod to Pride) ---------- */
+  const PALETTE = [
+    {n:'1', name:'Red',    c:'#ff4d57', g:'#ff9aa0'},
+    {n:'2', name:'Orange', c:'#ff9f1c', g:'#ffc56b'},
+    {n:'3', name:'Yellow', c:'#ffd400', g:'#fff07a'},
+    {n:'4', name:'Green',  c:'#37d399', g:'#86f0c4'},
+    {n:'5', name:'Blue',   c:'#3a9bff', g:'#8cc6ff'},
+    {n:'6', name:'Violet', c:'#b06bff', g:'#d6aaff'},
+  ];
+  const NCOL = PALETTE.length;
+  const rint = n => Math.floor(Math.random()*n);
 
-        /* ---------- Scoring (Mastermind w/ duplicates) ---------- */
-        function evaluate(guess, secret) {
-          let exact = 0,
-            partial = 0;
-          const sc = Array(NCOL).fill(0),
-            gc = Array(NCOL).fill(0);
-          for (let i = 0; i < guess.length; i++) {
-            if (guess[i] === secret[i]) exact++;
-            else {
-              sc[secret[i]]++;
-              gc[guess[i]]++;
-            }
-          }
-          for (let k = 0; k < NCOL; k++) partial += Math.min(sc[k], gc[k]);
-          return { exact, partial };
-        }
+  /* ---------- State ---------- */
+  let level, codeLen, maxGuesses, code, guesses, current, activeSlot,
+      bombeMax, bombeLeft, locked, totalScore, screen;
+  // safe storage — published artifacts run in a sandboxed iframe that may block localStorage
+  const store = {
+    get(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } },
+    set(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+  };
+  let best = +(store.get('solstice_best')||0);
 
-        /* ---------- Level setup ---------- */
-        function startLevel(lvl) {
-          level = lvl;
-          codeLen = Math.min(3 + lvl, 6); // 4,5,6,6,...
-          maxGuesses = 10 + (codeLen - 4) * 2; // 10,12,14
-          bombeMax = 2;
-          bombeLeft = 2;
-          code = Array.from({ length: codeLen }, () => rint(NCOL));
-          guesses = [];
-          locked = Array(codeLen).fill(false);
-          current = Array(codeLen).fill(0);
-          activeSlot = 0;
-          screen = "play";
-          hideOverlays();
-          render();
-        }
+  const $ = id => document.getElementById(id);
+  const els = {
+    codeSlots:$('codeSlots'), history:$('history'), editSlots:$('editSlots'),
+    marker:$('marker'), palette:$('palette'),
+    dayfill:$('dayfill'), daynum:$('daynum'), lvl:$('lvl'), bombe:$('bombe'),
+    score:$('score'), best:$('best'), toast:$('toast'),
+    ovStart:$('ovStart'), ovWin:$('ovWin'), ovLose:$('ovLose'),
+    winReveal:$('winReveal'), winScore:$('winScore'), winTitle:$('winTitle'),
+    loseReveal:$('loseReveal'), loseScore:$('loseScore'),
+  };
+  els.best.textContent = best;
 
-        function newRun() {
-          totalScore = 0;
-          startLevel(1);
-        }
+  /* ---------- Orb factory ---------- */
+  function orb(ci, opt={}){
+    const d = document.createElement('div');
+    d.className = 'orb';
+    if (opt.empty){ d.classList.add('empty'); return d; }
+    if (opt.mask){ d.classList.add('mask'); d.textContent='?'; return d; }
+    const p = PALETTE[ci];
+    d.style.setProperty('--c', p.c);
+    d.style.setProperty('--g', p.g);
+    d.textContent = p.n;
+    if (opt.active) d.classList.add('active');
+    if (opt.locked) d.classList.add('locked');
+    return d;
+  }
 
-        /* ---------- Render ---------- */
-        function render() {
-          // HUD
-          els.lvl.textContent = level;
-          els.score.textContent = totalScore;
-          els.best.textContent = best;
-          const left = maxGuesses - guesses.length;
-          els.daynum.textContent = left;
-          els.dayfill.style.transform = `scaleX(${Math.max(0, left / maxGuesses)})`;
-          els.bombe.textContent = "◆".repeat(bombeLeft) + "◇".repeat(bombeMax - bombeLeft) || "—";
+  /* ---------- Scoring (Mastermind w/ duplicates) ---------- */
+  function evaluate(guess, secret){
+    let exact=0, partial=0;
+    const sc=Array(NCOL).fill(0), gc=Array(NCOL).fill(0);
+    for (let i=0;i<guess.length;i++){
+      if (guess[i]===secret[i]) exact++;
+      else { sc[secret[i]]++; gc[guess[i]]++; }
+    }
+    for (let k=0;k<NCOL;k++) partial += Math.min(sc[k], gc[k]);
+    return {exact, partial};
+  }
 
-          // Code row (masked while playing)
-          els.codeSlots.innerHTML = "";
-          for (let i = 0; i < codeLen; i++) {
-            els.codeSlots.appendChild(screen === "play" ? orb(0, { mask: true }) : orb(code[i]));
-          }
+  /* ---------- Level setup ---------- */
+  function startLevel(lvl){
+    level = lvl;
+    codeLen = Math.min(3 + lvl, 6);            // 4,5,6,6,...
+    maxGuesses = 10 + (codeLen - 4) * 2;        // 10,12,14
+    bombeMax = 2; bombeLeft = 2;
+    code = Array.from({length:codeLen}, () => rint(NCOL));
+    guesses = [];
+    locked = Array(codeLen).fill(false);
+    current = Array(codeLen).fill(0);
+    activeSlot = 0;
+    screen = 'play';
+    hideOverlays();
+    render();
+  }
 
-          // History
-          els.history.innerHTML = "";
-          guesses.forEach((row, idx) => {
-            const r = document.createElement("div");
-            r.className = "row";
-            const num = document.createElement("span");
-            num.className = "num";
-            num.textContent = idx + 1;
-            const slots = document.createElement("div");
-            slots.className = "slots";
-            row.g.forEach(ci => slots.appendChild(orb(ci)));
-            r.appendChild(num);
-            r.appendChild(slots);
-            r.appendChild(pegBox(row.exact, row.partial, codeLen));
-            els.history.appendChild(r);
-          });
-          els.history.scrollTop = els.history.scrollHeight;
+  function newRun(){ totalScore = 0; startLevel(1); }
 
-          // Edit row
-          els.editSlots.innerHTML = "";
-          els.marker.innerHTML = "";
-          for (let i = 0; i < codeLen; i++) {
-            els.editSlots.appendChild(
-              orb(current[i], { active: i === activeSlot && screen === "play", locked: locked[i] }),
-            );
-            const m = document.createElement("div");
-            m.className = "m" + (i === activeSlot && screen === "play" ? " on" : "");
-            m.textContent = "▲";
-            els.marker.appendChild(m);
-          }
+  /* ---------- Render ---------- */
+  function render(){
+    // HUD
+    els.lvl.textContent = level;
+    els.score.textContent = totalScore;
+    els.best.textContent = best;
+    const left = maxGuesses - guesses.length;
+    els.daynum.textContent = left;
+    els.dayfill.style.transform = `scaleX(${Math.max(0,left/maxGuesses)})`;
+    els.bombe.textContent = '◆'.repeat(bombeLeft) + '◇'.repeat(bombeMax-bombeLeft) || '—';
 
-          // Palette legend
-          if (!els.palette.dataset.built) {
-            PALETTE.forEach(p => {
-              const k = document.createElement("div");
-              k.className = "key";
-              k.innerHTML = `<span class="kb">${p.n}</span><span class="dot" style="background:${p.c};box-shadow:0 0 8px ${p.c}"></span>${p.name}`;
-              els.palette.appendChild(k);
-            });
-            els.palette.dataset.built = "1";
-          }
-        }
-        function pegBox(exact, partial, len) {
-          const box = document.createElement("div");
-          box.className = "pegs";
-          for (let i = 0; i < len; i++) {
-            const p = document.createElement("span");
-            p.className = "peg " + (i < exact ? "exact" : i < exact + partial ? "partial" : "none");
-            box.appendChild(p);
-          }
-          return box;
-        }
+    // Code row (masked while playing)
+    els.codeSlots.innerHTML='';
+    for (let i=0;i<codeLen;i++){
+      els.codeSlots.appendChild(screen==='play' ? orb(0,{mask:true}) : orb(code[i]));
+    }
 
-        /* ---------- Actions ---------- */
-        function moveSlot(dir) {
-          if (screen !== "play") return;
-          let i = activeSlot;
-          for (let s = 0; s < codeLen; s++) {
-            i += dir;
-            if (i < 0 || i >= codeLen) return;
-            if (!locked[i]) {
-              activeSlot = i;
-              sfx("tick");
-              render();
-              return;
-            }
-          }
-        }
-        function cycleColor(dir) {
-          if (screen !== "play" || locked[activeSlot]) return;
-          current[activeSlot] = (current[activeSlot] + dir + NCOL) % NCOL;
-          sfx("blip", current[activeSlot]);
-          render();
-        }
-        function setColor(k) {
-          if (screen !== "play" || locked[activeSlot]) return;
-          current[activeSlot] = k;
-          sfx("blip", k);
-          // auto-advance to next unlocked slot for fast entry
-          let i = activeSlot;
-          for (let s = 0; s < codeLen; s++) {
-            i++;
-            if (i >= codeLen) break;
-            if (!locked[i]) {
-              activeSlot = i;
-              break;
-            }
-          }
-          render();
-        }
-        function submit() {
-          if (screen !== "play") return;
-          const g = current.slice();
-          const fb = evaluate(g, code);
-          guesses.push({ g, exact: fb.exact, partial: fb.partial });
-          if (fb.exact === codeLen) {
-            win();
-            return;
-          }
-          if (guesses.length >= maxGuesses) {
-            lose();
-            return;
-          }
-          sfx(fb.exact > 0 ? "good" : "bad", fb.exact);
-          // reset active slot to first unlocked
-          activeSlot = 0;
-          while (activeSlot < codeLen && locked[activeSlot]) activeSlot++;
-          render();
-        }
-        function bombe() {
-          if (screen !== "play" || bombeLeft <= 0) return;
-          // candidate positions: not yet locked, prefer ones currently wrong
-          const open = [];
-          for (let i = 0; i < codeLen; i++) if (!locked[i]) open.push(i);
-          if (!open.length) {
-            toast("Bombe: every slot is already solved");
-            return;
-          }
-          const wrong = open.filter(i => current[i] !== code[i]);
-          const pool = wrong.length ? wrong : open;
-          const pos = pool[rint(pool.length)];
-          current[pos] = code[pos];
-          locked[pos] = true;
-          bombeLeft--;
-          if (activeSlot === pos) {
-            activeSlot = 0;
-            while (activeSlot < codeLen && locked[activeSlot]) activeSlot++;
-          }
-          sfx("bombe");
-          toast(`The Bombe locks slot ${pos + 1}: ${PALETTE[code[pos]].name}`);
-          burst(0.5, 0.42, PALETTE[code[pos]].c, 18);
-          render();
-        }
+    // History
+    els.history.innerHTML='';
+    guesses.forEach((row,idx)=>{
+      const r = document.createElement('div'); r.className='row';
+      const num = document.createElement('span'); num.className='num'; num.textContent=(idx+1);
+      const slots = document.createElement('div'); slots.className='slots';
+      row.g.forEach(ci => slots.appendChild(orb(ci)));
+      r.appendChild(num); r.appendChild(slots); r.appendChild(pegBox(row.exact,row.partial,codeLen));
+      els.history.appendChild(r);
+    });
+    els.history.scrollTop = els.history.scrollHeight;
 
-        function win() {
-          screen = "win";
-          const remaining = maxGuesses - guesses.length;
-          const lvlB = level * 100,
-            dayB = remaining * 15,
-            bombeB = bombeLeft * 40;
-          const round = lvlB + dayB + bombeB;
-          totalScore += round;
-          if (totalScore > best) {
-            best = totalScore;
-            store.set("solstice_best", best);
-          }
-          render();
-          els.winTitle.textContent = remaining >= maxGuesses - 2 ? "Flawless Decrypt" : "The Beacon Fires";
-          els.winReveal.innerHTML = "";
-          code.forEach(ci => els.winReveal.appendChild(orb(ci)));
-          els.winScore.innerHTML =
-            `Level clear <span class="v">+${lvlB}</span> · Daylight saved <span class="v">+${dayB}</span> · Bombe held <span class="v">+${bombeB}</span><br>` +
-            `Total score <span class="v">${totalScore}</span>`;
-          showOverlay("ovWin");
-          sfx("win");
-          celebrate();
-        }
-        function lose() {
-          screen = "lose";
-          if (totalScore > best) {
-            best = totalScore;
-            store.set("solstice_best", best);
-          }
-          render();
-          els.loseReveal.innerHTML = "";
-          code.forEach(ci => els.loseReveal.appendChild(orb(ci)));
-          els.loseScore.innerHTML = `You reached <span class="v">Level ${level}</span> · Final score <span class="v">${totalScore}</span> · Best <span class="v">${best}</span>`;
-          showOverlay("ovLose");
-          sfx("lose");
-          shake(14);
-        }
+    // Edit row
+    els.editSlots.innerHTML='';
+    els.marker.innerHTML='';
+    for (let i=0;i<codeLen;i++){
+      els.editSlots.appendChild(orb(current[i], {active:i===activeSlot && screen==='play', locked:locked[i]}));
+      const m = document.createElement('div'); m.className='m'+(i===activeSlot && screen==='play'?' on':''); m.textContent='▲';
+      els.marker.appendChild(m);
+    }
 
-        /* ---------- Overlay helpers ---------- */
-        function hideOverlays() {
-          ["ovStart", "ovWin", "ovLose"].forEach(k => els[k].classList.remove("show"));
-        }
-        function showOverlay(k) {
-          hideOverlays();
-          els[k].classList.add("show");
-        }
-        let toastT;
-        function toast(msg) {
-          els.toast.textContent = msg;
-          els.toast.classList.add("show");
-          clearTimeout(toastT);
-          toastT = setTimeout(() => els.toast.classList.remove("show"), 2200);
-        }
-
-        /* ---------- Input ---------- */
-        window.addEventListener(
-          "keydown",
-          e => {
-            const k = e.key;
-            // overlay routing
-            if (screen === "start") {
-              if (k === "Enter" || k === " ") {
-                e.preventDefault();
-                unlockAudio();
-                newRun();
-              }
-              return;
-            }
-            if (screen === "win") {
-              if (k === "Enter" || k === " ") {
-                e.preventDefault();
-                startLevel(level + 1);
-              }
-              return;
-            }
-            if (screen === "lose") {
-              if (k === "Enter" || k === " " || k === "r" || k === "R") {
-                e.preventDefault();
-                newRun();
-              }
-              return;
-            }
-
-            switch (k) {
-              case "ArrowLeft":
-                e.preventDefault();
-                moveSlot(-1);
-                break;
-              case "ArrowRight":
-                e.preventDefault();
-                moveSlot(1);
-                break;
-              case "ArrowUp":
-                e.preventDefault();
-                cycleColor(1);
-                break;
-              case "ArrowDown":
-                e.preventDefault();
-                cycleColor(-1);
-                break;
-              case "Enter":
-              case " ":
-                e.preventDefault();
-                submit();
-                break;
-              case "b":
-              case "B":
-                bombe();
-                break;
-              case "r":
-              case "R":
-                newRun();
-                break;
-              case "m":
-              case "M":
-                toggleMute();
-                break;
-              default:
-                if (k >= "1" && k <= "6") setColor(+k - 1);
-            }
-          },
-          { passive: false },
-        );
-
-        // pointer support (orbs + buttons)
-        els.editSlots.addEventListener("click", e => {
-          const orbs = [...els.editSlots.children];
-          const i = orbs.indexOf(e.target.closest(".orb"));
-          if (i >= 0 && !locked[i]) {
-            activeSlot = i;
-            cycleColor(1);
-          }
-        });
-        els.palette.addEventListener("click", e => {
-          const key = e.target.closest(".key");
-          if (!key) return;
-          const i = [...els.palette.children].indexOf(key);
-          if (i >= 0) setColor(i);
-        });
-        $("startBtn").onclick = () => {
-          unlockAudio();
-          newRun();
-        };
-        $("nextBtn").onclick = () => startLevel(level + 1);
-        $("retryBtn").onclick = () => newRun();
-        $("muteBtn").onclick = toggleMute;
-
-        /* ================= CANVAS: sky, sun, stars, particles ================= */
-        const cv = $("bg"),
-          ctx = cv.getContext("2d");
-        let W,
-          H,
-          DPR,
-          stars = [],
-          motes = [],
-          parts = [],
-          shakeAmt = 0;
-        function resize() {
-          DPR = Math.min(2, window.devicePixelRatio || 1);
-          W = cv.width = innerWidth * DPR;
-          H = cv.height = innerHeight * DPR;
-          cv.style.width = innerWidth + "px";
-          cv.style.height = innerHeight + "px";
-        }
-        addEventListener("resize", resize);
-        resize();
-
-        // build star + mote fields
-        for (let i = 0; i < 150; i++)
-          stars.push({
-            x: Math.random(),
-            y: Math.random() * 0.7,
-            r: Math.random() * 1.6 + 0.3,
-            t: Math.random() * 6.28,
-          });
-        for (let i = 0; i < 26; i++)
-          motes.push({
-            x: Math.random(),
-            y: Math.random(),
-            r: Math.random() * 2 + 0.6,
-            s: Math.random() * 0.02 + 0.004,
-            t: Math.random() * 6.28,
-          });
-
-        // sky keyframes [topRGB, bottomRGB] at f=0 (noon),0.5(dusk),1(night)
-        const SKY = [
-          [
-            [42, 140, 255],
-            [170, 214, 255],
-          ],
-          [
-            [255, 138, 71],
-            [255, 205, 150],
-          ],
-          [
-            [8, 10, 40],
-            [26, 22, 58],
-          ],
-        ];
-        const lerp = (a, b, t) => a + (b - a) * t;
-        const mix = (c1, c2, t) => c1.map((v, i) => Math.round(lerp(v, c2[i], t)));
-        function skyAt(f) {
-          let seg = f < 0.5 ? 0 : 1,
-            lt = f < 0.5 ? f / 0.5 : (f - 0.5) / 0.5;
-          return { top: mix(SKY[seg][0], SKY[seg + 1][0], lt), bot: mix(SKY[seg][1], SKY[seg + 1][1], lt) };
-        }
-        const rgb = a => `rgb(${a[0]},${a[1]},${a[2]})`;
-
-        function burst(nx, ny, color, n = 24) {
-          const x = nx * W,
-            y = ny * H;
-          for (let i = 0; i < n; i++) {
-            const a = Math.random() * 6.28,
-              sp = (Math.random() * 5 + 2) * DPR;
-            parts.push({
-              x,
-              y,
-              vx: Math.cos(a) * sp,
-              vy: Math.sin(a) * sp - 2 * DPR,
-              life: 1,
-              col: color,
-              r: (Math.random() * 3 + 1.5) * DPR,
-            });
-          }
-        }
-        function celebrate() {
-          const cols = PALETTE.map(p => p.c);
-          for (let k = 0; k < 5; k++) setTimeout(() => burst(0.5, 0.4, cols[rint(cols.length)], 26), k * 90);
-          shake(6);
-        }
-        function shake(a) {
-          shakeAmt = Math.max(shakeAmt, a * DPR);
-        }
-
-        let t0 = performance.now();
-        function frame(now) {
-          const time = (now - t0) / 1000;
-          // daylight fraction from guesses used
-          const f = guesses ? Math.min(1, guesses.length / maxGuesses) : 0;
-          const dim = screen === "lose" ? 1 : f;
-          const sky = skyAt(dim);
-
-          ctx.save();
-          if (shakeAmt > 0.2) {
-            ctx.translate((Math.random() - 0.5) * shakeAmt, (Math.random() - 0.5) * shakeAmt);
-            shakeAmt *= 0.88;
-          }
-
-          // gradient sky
-          const grad = ctx.createLinearGradient(0, 0, 0, H);
-          grad.addColorStop(0, rgb(sky.top));
-          grad.addColorStop(1, rgb(sky.bot));
-          ctx.fillStyle = grad;
-          ctx.fillRect(0, 0, W, H);
-
-          // stars (fade in as it darkens)
-          const starA = Math.max(0, (dim - 0.4) / 0.6);
-          if (starA > 0) {
-            for (const s of stars) {
-              const tw = 0.6 + 0.4 * Math.sin(time * 2 + s.t);
-              ctx.globalAlpha = starA * tw;
-              ctx.fillStyle = "#fff";
-              ctx.beginPath();
-              ctx.arc(s.x * W, s.y * H, s.r * DPR, 0, 6.28);
-              ctx.fill();
-            }
-            ctx.globalAlpha = 1;
-          }
-
-          // sun — descends along an arc as daylight is spent
-          const sx = W * (0.5 + 0.42 * dim);
-          const sy = H * (0.17 + 0.62 * dim * dim);
-          const sunA = Math.max(0, 1 - dim * 0.9);
-          const sunR = Math.min(W, H) * 0.06;
-          const halo = ctx.createRadialGradient(sx, sy, 0, sx, sy, sunR * 6);
-          halo.addColorStop(0, `rgba(255,236,180,${0.55 * sunA})`);
-          halo.addColorStop(0.4, `rgba(255,180,90,${0.22 * sunA})`);
-          halo.addColorStop(1, "rgba(255,160,80,0)");
-          ctx.fillStyle = halo;
-          ctx.beginPath();
-          ctx.arc(sx, sy, sunR * 6, 0, 6.28);
-          ctx.fill();
-          const sun = ctx.createRadialGradient(sx - sunR * 0.3, sy - sunR * 0.3, 0, sx, sy, sunR);
-          sun.addColorStop(0, `rgba(255,250,235,${0.5 + 0.5 * sunA})`);
-          sun.addColorStop(1, `rgba(255,196,110,${0.35 + 0.45 * sunA})`);
-          ctx.fillStyle = sun;
-          ctx.beginPath();
-          ctx.arc(sx, sy, sunR, 0, 6.28);
-          ctx.fill();
-
-          // moon ghost at night
-          if (dim > 0.7) {
-            const ma = (dim - 0.7) / 0.3,
-              mx = W * 0.2,
-              my = H * 0.2;
-            ctx.globalAlpha = ma * 0.8;
-            ctx.fillStyle = "#cdd6f0";
-            ctx.beginPath();
-            ctx.arc(mx, my, sunR * 0.7, 0, 6.28);
-            ctx.fill();
-            ctx.globalAlpha = ma * 0.9;
-            ctx.fillStyle = rgb(sky.top);
-            ctx.beginPath();
-            ctx.arc(mx + sunR * 0.28, my - sunR * 0.18, sunR * 0.7, 0, 6.28);
-            ctx.fill();
-            ctx.globalAlpha = 1;
-          }
-
-          // floating light motes
-          for (const m of motes) {
-            m.y -= m.s;
-            m.t += 0.02;
-            if (m.y < -0.05) {
-              m.y = 1.05;
-              m.x = Math.random();
-            }
-            const a = (0.18 + 0.12 * Math.sin(m.t)) * (1 - dim * 0.5);
-            ctx.globalAlpha = Math.max(0, a);
-            ctx.fillStyle = "#ffe9b0";
-            ctx.beginPath();
-            ctx.arc((m.x + 0.01 * Math.sin(m.t)) * W, m.y * H, m.r * DPR, 0, 6.28);
-            ctx.fill();
-          }
-          ctx.globalAlpha = 1;
-
-          // particles
-          for (let i = parts.length - 1; i >= 0; i--) {
-            const p = parts[i];
-            p.x += p.vx;
-            p.y += p.vy;
-            p.vy += 0.12 * DPR;
-            p.vx *= 0.99;
-            p.life -= 0.016;
-            if (p.life <= 0) {
-              parts.splice(i, 1);
-              continue;
-            }
-            ctx.globalAlpha = Math.max(0, p.life);
-            ctx.fillStyle = p.col;
-            ctx.shadowBlur = 10;
-            ctx.shadowColor = p.col;
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, p.r, 0, 6.28);
-            ctx.fill();
-          }
-          ctx.shadowBlur = 0;
-          ctx.globalAlpha = 1;
-          ctx.restore();
-
-          requestAnimationFrame(frame);
-        }
-        requestAnimationFrame(frame);
-
-        /* ================= AUDIO (WebAudio, retro machine tones) ================= */
-        let actx = null,
-          muted = false;
-        function unlockAudio() {
-          if (!actx) {
-            try {
-              actx = new (window.AudioContext || window.webkitAudioContext)();
-            } catch (e) {}
-          }
-          if (actx && actx.state === "suspended") actx.resume();
-        }
-        function tone(freq, dur, type = "sine", vol = 0.14, when = 0) {
-          if (!actx || muted) return;
-          const t = actx.currentTime + when;
-          const o = actx.createOscillator(),
-            g = actx.createGain();
-          o.type = type;
-          o.frequency.setValueAtTime(freq, t);
-          g.gain.setValueAtTime(0, t);
-          g.gain.linearRampToValueAtTime(vol, t + 0.012);
-          g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-          o.connect(g).connect(actx.destination);
-          o.start(t);
-          o.stop(t + dur + 0.02);
-        }
-        function sfx(kind, n = 0) {
-          if (!actx || muted) return;
-          if (kind === "tick") tone(420, 0.05, "square", 0.05);
-          else if (kind === "blip") tone(360 + n * 70, 0.08, "triangle", 0.09);
-          else if (kind === "good") {
-            tone(520, 0.1, "sine", 0.1);
-            tone(780, 0.12, "sine", 0.08, 0.06);
-          } else if (kind === "bad") tone(150, 0.16, "sawtooth", 0.07);
-          else if (kind === "bombe") {
-            for (let i = 0; i < 5; i++) tone(220 + i * 30, 0.12, "square", 0.05, i * 0.05);
-          } else if (kind === "win") {
-            [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.5, "sine", 0.12, i * 0.11));
-          } else if (kind === "lose") {
-            [330, 247, 196, 147].forEach((f, i) => tone(f, 0.5, "sawtooth", 0.09, i * 0.12));
-          }
-        }
-        function toggleMute() {
-          unlockAudio();
-          muted = !muted;
-          $("muteBtn").textContent = muted ? "♪ sound off" : "♪ sound on";
-          $("muteBtn").style.opacity = muted ? 0.55 : 1;
-          if (!muted) sfx("blip", 3);
-        }
-
-        // boot
-        screen = "start";
-      })();
-    </script>
-    <script>
-      document.addEventListener("keydown", function (e) {
-        if (e.key === "Escape" && window.parent !== window) {
-          window.parent.postMessage({ type: "close-fullscreen" }, "*");
-        }
+    // Palette legend
+    if (!els.palette.dataset.built){
+      PALETTE.forEach(p=>{
+        const k=document.createElement('div'); k.className='key';
+        k.innerHTML=`<span class="kb">${p.n}</span><span class="dot" style="background:${p.c};box-shadow:0 0 8px ${p.c}"></span><span class="nm">${p.name}</span>`;
+        els.palette.appendChild(k);
       });
-    </script>
-    <!-- broken-img-handler -->
-    <script>
-      (function () {
-        if (window.__brokenImgHandler) return;
-        window.__brokenImgHandler = true;
-        var MAX = 5,
-          DELAYS = [2000, 4000, 8000, 16000, 32000];
-        document.addEventListener(
-          "error",
-          function (e) {
-            var img = e.target;
-            if (!img || img.tagName !== "IMG") return;
-            var liveSrc = img.getAttribute("src");
-            var src = img.dataset.haOriginalSrc || liveSrc;
-            if (!src) return;
-            if (
-              img.dataset.haOriginalSrc &&
-              liveSrc &&
-              liveSrc !== img.dataset.haOriginalSrc &&
-              liveSrc.indexOf("_r=") < 0
-            ) {
-              src = liveSrc;
-              img.dataset.haOriginalSrc = src;
-              img.dataset.haRetryCount = "0";
-            } else if (!img.dataset.haOriginalSrc) {
-              img.dataset.haOriginalSrc = src;
-            }
-            var attempt = parseInt(img.dataset.haRetryCount || "0", 10);
-            if (img.dataset.haPhId) {
-              var old = document.getElementById(img.dataset.haPhId);
-              if (old) old.remove();
-            }
-            var ph = document.createElement("div");
-            ph.className = "ha-img-placeholder" + (attempt >= MAX ? " ha-failed" : "");
-            ph.id = "ha-ph-" + Math.random().toString(36).slice(2, 9);
-            var w = img.getAttribute("width");
-            var h = img.getAttribute("height");
-            if (w) ph.style.width = w + (isNaN(Number(w)) ? "" : "px");
-            else if (img.style.width) ph.style.width = img.style.width;
-            else if (img.width > 1) ph.style.width = img.width + "px";
-            if (h) ph.style.height = h + (isNaN(Number(h)) ? "" : "px");
-            else if (img.style.height) ph.style.height = img.style.height;
-            else if (img.height > 1) ph.style.height = img.height + "px";
-            ph.textContent = attempt >= MAX ? "Image unavailable" : "Loading image\u2026";
-            img.dataset.haPhId = ph.id;
-            if (img.dataset.haOrigDisplay == null) img.dataset.haOrigDisplay = img.style.display || "";
-            img.style.display = "none";
-            img.insertAdjacentElement("afterend", ph);
-            if (attempt < MAX) {
-              img.dataset.haRetryCount = String(attempt + 1);
-              setTimeout(function () {
-                if (!img.isConnected) return;
-                if (img.dataset.haOriginalSrc !== src) return;
-                if (img.complete && img.naturalWidth > 0) return;
-                var curSrc = img.getAttribute("src");
-                if (curSrc && curSrc.indexOf(src) !== 0) return;
-                var fresh = src + (src.indexOf("?") >= 0 ? "&" : "?") + "_r=" + (attempt + 1) + "_" + Date.now();
-                img.src = fresh;
-              }, DELAYS[attempt]);
-            }
-          },
-          true,
-        );
-        document.addEventListener(
-          "load",
-          function (e) {
-            var img = e.target;
-            if (!img || img.tagName !== "IMG") return;
-            if (img.dataset.haPhId) {
-              var ph = document.getElementById(img.dataset.haPhId);
-              if (ph) ph.remove();
-              delete img.dataset.haPhId;
-              img.style.display = img.dataset.haOrigDisplay || "";
-              delete img.dataset.haOrigDisplay;
-              delete img.dataset.haOriginalSrc;
-              delete img.dataset.haRetryCount;
-            }
-          },
-          true,
-        );
-      })();
-    </script>
-  </body>
+      els.palette.dataset.built='1';
+    }
+  }
+  function pegBox(exact,partial,len){
+    const box=document.createElement('div'); box.className='pegs';
+    for (let i=0;i<len;i++){
+      const p=document.createElement('span');
+      p.className='peg '+(i<exact?'exact':i<exact+partial?'partial':'none');
+      box.appendChild(p);
+    }
+    return box;
+  }
+
+  /* ---------- Actions ---------- */
+  function moveSlot(dir){
+    if (screen!=='play') return;
+    let i=activeSlot;
+    for (let s=0;s<codeLen;s++){
+      i+=dir;
+      if (i<0||i>=codeLen) return;
+      if (!locked[i]){ activeSlot=i; sfx('tick'); render(); return; }
+    }
+  }
+  function cycleColor(dir){
+    if (screen!=='play'||locked[activeSlot]) return;
+    current[activeSlot]=(current[activeSlot]+dir+NCOL)%NCOL;
+    sfx('blip',current[activeSlot]); render();
+  }
+  function setColor(k){
+    if (screen!=='play'||locked[activeSlot]) return;
+    current[activeSlot]=k; sfx('blip',k);
+    // auto-advance to next unlocked slot for fast entry
+    let i=activeSlot;
+    for (let s=0;s<codeLen;s++){ i++; if (i>=codeLen) break; if(!locked[i]){activeSlot=i;break;} }
+    render();
+  }
+  function submit(){
+    if (screen!=='play') return;
+    const g=current.slice();
+    const fb=evaluate(g,code);
+    guesses.push({g, exact:fb.exact, partial:fb.partial});
+    if (fb.exact===codeLen){ win(); return; }
+    if (guesses.length>=maxGuesses){ lose(); return; }
+    sfx(fb.exact>0?'good':'bad', fb.exact);
+    // reset active slot to first unlocked
+    activeSlot=0; while(activeSlot<codeLen && locked[activeSlot]) activeSlot++;
+    render();
+  }
+  function bombe(){
+    if (screen!=='play'||bombeLeft<=0) return;
+    // candidate positions: not yet locked, prefer ones currently wrong
+    const open=[]; for(let i=0;i<codeLen;i++) if(!locked[i]) open.push(i);
+    if (!open.length){ toast('Bombe: every slot is already solved'); return; }
+    const wrong=open.filter(i=>current[i]!==code[i]);
+    const pool=wrong.length?wrong:open;
+    const pos=pool[rint(pool.length)];
+    current[pos]=code[pos]; locked[pos]=true; bombeLeft--;
+    if (activeSlot===pos){ activeSlot=0; while(activeSlot<codeLen && locked[activeSlot]) activeSlot++; }
+    sfx('bombe'); toast(`The Bombe locks slot ${pos+1}: ${PALETTE[code[pos]].name}`);
+    burst(0.5,0.42,PALETTE[code[pos]].c,18);
+    render();
+  }
+
+  function win(){
+    screen='win';
+    const remaining=maxGuesses-guesses.length;
+    const lvlB=level*100, dayB=remaining*15, bombeB=bombeLeft*40;
+    const round=lvlB+dayB+bombeB;
+    totalScore+=round;
+    if (totalScore>best){ best=totalScore; store.set('solstice_best',best); }
+    render();
+    els.winTitle.textContent = remaining>=maxGuesses-2 ? 'Flawless Decrypt' : 'The Beacon Fires';
+    els.winReveal.innerHTML=''; code.forEach(ci=>els.winReveal.appendChild(orb(ci)));
+    els.winScore.innerHTML =
+      `Level clear <span class="v">+${lvlB}</span> · Daylight saved <span class="v">+${dayB}</span> · Bombe held <span class="v">+${bombeB}</span><br>`+
+      `Total score <span class="v">${totalScore}</span>`;
+    showOverlay('ovWin');
+    sfx('win'); celebrate();
+  }
+  function lose(){
+    screen='lose';
+    if (totalScore>best){ best=totalScore; store.set('solstice_best',best); }
+    render();
+    els.loseReveal.innerHTML=''; code.forEach(ci=>els.loseReveal.appendChild(orb(ci)));
+    els.loseScore.innerHTML = `You reached <span class="v">Level ${level}</span> · Final score <span class="v">${totalScore}</span> · Best <span class="v">${best}</span>`;
+    showOverlay('ovLose');
+    sfx('lose'); shake(14);
+  }
+
+  /* ---------- Overlay helpers ---------- */
+  function hideOverlays(){ ['ovStart','ovWin','ovLose'].forEach(k=>els[k].classList.remove('show')); }
+  function showOverlay(k){ hideOverlays(); els[k].classList.add('show'); }
+  let toastT;
+  function toast(msg){ els.toast.textContent=msg; els.toast.classList.add('show');
+    clearTimeout(toastT); toastT=setTimeout(()=>els.toast.classList.remove('show'),2200); }
+
+  /* ---------- Input ---------- */
+  window.addEventListener('keydown', e=>{
+    const k=e.key;
+    // overlay routing
+    if (screen==='start'){ if(k==='Enter'||k===' '){ e.preventDefault(); unlockAudio(); newRun(); } return; }
+    if (screen==='win'){ if(k==='Enter'||k===' '){ e.preventDefault(); startLevel(level+1);} return; }
+    if (screen==='lose'){ if(k==='Enter'||k===' '||k==='r'||k==='R'){ e.preventDefault(); newRun(); } return; }
+
+    switch(k){
+      case 'ArrowLeft':  e.preventDefault(); moveSlot(-1); break;
+      case 'ArrowRight': e.preventDefault(); moveSlot(1); break;
+      case 'ArrowUp':    e.preventDefault(); cycleColor(1); break;
+      case 'ArrowDown':  e.preventDefault(); cycleColor(-1); break;
+      case 'Enter': case ' ': e.preventDefault(); submit(); break;
+      case 'b': case 'B': bombe(); break;
+      case 'r': case 'R': newRun(); break;
+      case 'm': case 'M': toggleMute(); break;
+      default:
+        if (k>='1' && k<='6') setColor(+k-1);
+    }
+  }, {passive:false});
+
+  // pointer support (orbs + buttons)
+  els.editSlots.addEventListener('click', e=>{
+    if (screen!=='play') return;
+    const orbs=[...els.editSlots.children]; const i=orbs.indexOf(e.target.closest('.orb'));
+    if (i<0 || locked[i]) return;
+    if (i===activeSlot){ cycleColor(1); }            // tap the active slot again to cycle its color
+    else { activeSlot=i; sfx('tick'); render(); }    // first tap just selects the slot
+  });
+  els.palette.addEventListener('click', e=>{
+    const key=e.target.closest('.key'); if(!key) return;
+    const i=[...els.palette.children].indexOf(key); if(i>=0) setColor(i);
+  });
+  $('startBtn').onclick=()=>{ unlockAudio(); newRun(); };
+  $('nextBtn').onclick=()=>startLevel(level+1);
+  $('retryBtn').onclick=()=>newRun();
+  $('muteBtn').onclick=toggleMute;
+
+  // on-screen controls for touch devices (no keyboard)
+  if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches ||
+      'ontouchstart' in window || (navigator.maxTouchPoints||0) > 0){
+    document.body.classList.add('touch');
+  }
+  $('touchbar').addEventListener('click', e=>{
+    const b=e.target.closest('.tbtn'); if(!b) return;
+    unlockAudio();
+    const a=b.dataset.act;
+    if (a==='submit') submit();
+    else if (a==='bombe') bombe();
+    else if (a==='reset') newRun();
+  });
+
+  /* ================= CANVAS: sky, sun, stars, particles ================= */
+  const cv=$('bg'), ctx=cv.getContext('2d');
+  let W,H,DPR, stars=[], motes=[], parts=[], shakeAmt=0;
+  function resize(){
+    DPR=Math.min(2,window.devicePixelRatio||1);
+    W=cv.width=innerWidth*DPR; H=cv.height=innerHeight*DPR;
+    cv.style.width=innerWidth+'px'; cv.style.height=innerHeight+'px';
+  }
+  addEventListener('resize',resize); resize();
+
+  // build star + mote fields
+  for (let i=0;i<150;i++) stars.push({x:Math.random(),y:Math.random()*0.7,r:Math.random()*1.6+0.3,t:Math.random()*6.28});
+  for (let i=0;i<26;i++) motes.push({x:Math.random(),y:Math.random(),r:Math.random()*2+0.6,s:Math.random()*0.02+0.004,t:Math.random()*6.28});
+
+  // sky keyframes [topRGB, bottomRGB] at f=0 (noon),0.5(dusk),1(night)
+  const SKY=[
+    [[42,140,255],[170,214,255]],
+    [[255,138,71],[255,205,150]],
+    [[8,10,40],[26,22,58]],
+  ];
+  const lerp=(a,b,t)=>a+(b-a)*t;
+  const mix=(c1,c2,t)=>c1.map((v,i)=>Math.round(lerp(v,c2[i],t)));
+  function skyAt(f){
+    let seg = f<0.5 ? 0:1, lt=(f<0.5?f/0.5:(f-0.5)/0.5);
+    return { top:mix(SKY[seg][0],SKY[seg+1][0],lt), bot:mix(SKY[seg][1],SKY[seg+1][1],lt) };
+  }
+  const rgb=a=>`rgb(${a[0]},${a[1]},${a[2]})`;
+
+  function burst(nx,ny,color,n=24){
+    const x=nx*W, y=ny*H;
+    for (let i=0;i<n;i++){
+      const a=Math.random()*6.28, sp=(Math.random()*5+2)*DPR;
+      parts.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-2*DPR,life:1,col:color,r:(Math.random()*3+1.5)*DPR});
+    }
+  }
+  function celebrate(){
+    const cols=PALETTE.map(p=>p.c);
+    for (let k=0;k<5;k++) setTimeout(()=>burst(0.5,0.4,cols[rint(cols.length)],26),k*90);
+    shake(6);
+  }
+  function shake(a){ shakeAmt=Math.max(shakeAmt,a*DPR); }
+
+  let t0=performance.now();
+  function frame(now){
+    const time=(now-t0)/1000;
+    // daylight fraction from guesses used
+    const f = guesses ? Math.min(1, guesses.length/maxGuesses) : 0;
+    const dim = screen==='lose' ? 1 : f;
+    const sky=skyAt(dim);
+
+    ctx.save();
+    if (shakeAmt>0.2){ ctx.translate((Math.random()-0.5)*shakeAmt,(Math.random()-0.5)*shakeAmt); shakeAmt*=0.88; }
+
+    // gradient sky
+    const grad=ctx.createLinearGradient(0,0,0,H);
+    grad.addColorStop(0,rgb(sky.top)); grad.addColorStop(1,rgb(sky.bot));
+    ctx.fillStyle=grad; ctx.fillRect(0,0,W,H);
+
+    // stars (fade in as it darkens)
+    const starA=Math.max(0,(dim-0.4)/0.6);
+    if (starA>0){
+      for (const s of stars){
+        const tw=0.6+0.4*Math.sin(time*2+s.t);
+        ctx.globalAlpha=starA*tw; ctx.fillStyle='#fff';
+        ctx.beginPath(); ctx.arc(s.x*W,s.y*H,s.r*DPR,0,6.28); ctx.fill();
+      }
+      ctx.globalAlpha=1;
+    }
+
+    // sun — descends along an arc as daylight is spent
+    const sx=W*(0.5+0.42*dim);
+    const sy=H*(0.17+0.62*dim*dim);
+    const sunA=Math.max(0,1-dim*0.9);
+    const sunR=Math.min(W,H)*0.06;
+    const halo=ctx.createRadialGradient(sx,sy,0,sx,sy,sunR*6);
+    halo.addColorStop(0,`rgba(255,236,180,${0.55*sunA})`);
+    halo.addColorStop(0.4,`rgba(255,180,90,${0.22*sunA})`);
+    halo.addColorStop(1,'rgba(255,160,80,0)');
+    ctx.fillStyle=halo; ctx.beginPath(); ctx.arc(sx,sy,sunR*6,0,6.28); ctx.fill();
+    const sun=ctx.createRadialGradient(sx-sunR*0.3,sy-sunR*0.3,0,sx,sy,sunR);
+    sun.addColorStop(0,`rgba(255,250,235,${0.5+0.5*sunA})`);
+    sun.addColorStop(1,`rgba(255,196,110,${0.35+0.45*sunA})`);
+    ctx.fillStyle=sun; ctx.beginPath(); ctx.arc(sx,sy,sunR,0,6.28); ctx.fill();
+
+    // moon ghost at night
+    if (dim>0.7){
+      const ma=(dim-0.7)/0.3, mx=W*0.2, my=H*0.2;
+      ctx.globalAlpha=ma*0.8; ctx.fillStyle='#cdd6f0';
+      ctx.beginPath(); ctx.arc(mx,my,sunR*0.7,0,6.28); ctx.fill();
+      ctx.globalAlpha=ma*0.9; ctx.fillStyle=rgb(sky.top);
+      ctx.beginPath(); ctx.arc(mx+sunR*0.28,my-sunR*0.18,sunR*0.7,0,6.28); ctx.fill();
+      ctx.globalAlpha=1;
+    }
+
+    // floating light motes
+    for (const m of motes){
+      m.y-=m.s; m.t+=0.02; if(m.y<-0.05){m.y=1.05; m.x=Math.random();}
+      const a=(0.18+0.12*Math.sin(m.t))*(1-dim*0.5);
+      ctx.globalAlpha=Math.max(0,a); ctx.fillStyle='#ffe9b0';
+      ctx.beginPath(); ctx.arc((m.x+0.01*Math.sin(m.t))*W,m.y*H,m.r*DPR,0,6.28); ctx.fill();
+    }
+    ctx.globalAlpha=1;
+
+    // particles
+    for (let i=parts.length-1;i>=0;i--){
+      const p=parts[i]; p.x+=p.vx; p.y+=p.vy; p.vy+=0.12*DPR; p.vx*=0.99; p.life-=0.016;
+      if (p.life<=0){ parts.splice(i,1); continue; }
+      ctx.globalAlpha=Math.max(0,p.life); ctx.fillStyle=p.col;
+      ctx.shadowBlur=10; ctx.shadowColor=p.col;
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,6.28); ctx.fill();
+    }
+    ctx.shadowBlur=0; ctx.globalAlpha=1;
+    ctx.restore();
+
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  /* ================= AUDIO (WebAudio, retro machine tones) ================= */
+  let actx=null, muted=false;
+  function unlockAudio(){ if(!actx){ try{ actx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(actx&&actx.state==='suspended') actx.resume(); }
+  function tone(freq,dur,type='sine',vol=0.14,when=0){
+    if(!actx||muted) return;
+    const t=actx.currentTime+when;
+    const o=actx.createOscillator(), g=actx.createGain();
+    o.type=type; o.frequency.setValueAtTime(freq,t);
+    g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vol,t+0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    o.connect(g).connect(actx.destination); o.start(t); o.stop(t+dur+0.02);
+  }
+  function sfx(kind,n=0){
+    if(!actx||muted) return;
+    if(kind==='tick') tone(420,0.05,'square',0.05);
+    else if(kind==='blip') tone(360+n*70,0.08,'triangle',0.09);
+    else if(kind==='good'){ tone(520,0.1,'sine',0.1); tone(780,0.12,'sine',0.08,0.06); }
+    else if(kind==='bad') tone(150,0.16,'sawtooth',0.07);
+    else if(kind==='bombe'){ for(let i=0;i<5;i++) tone(220+i*30,0.12,'square',0.05,i*0.05); }
+    else if(kind==='win'){ [523,659,784,1047].forEach((f,i)=>tone(f,0.5,'sine',0.12,i*0.11)); }
+    else if(kind==='lose'){ [330,247,196,147].forEach((f,i)=>tone(f,0.5,'sawtooth',0.09,i*0.12)); }
+  }
+  function toggleMute(){ unlockAudio(); muted=!muted; $('muteBtn').textContent=muted?'♪ sound off':'♪ sound on';
+    $('muteBtn').style.opacity=muted?0.55:1; if(!muted) sfx('blip',3); }
+
+  // boot
+  screen='start';
+})();
+</script>
+<script>
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape' && window.parent !== window) {
+    window.parent.postMessage({ type: 'close-fullscreen' }, '*');
+  }
+});
+</script>
+<!-- broken-img-handler -->
+<script>
+(function(){
+  if(window.__brokenImgHandler)return;
+  window.__brokenImgHandler=true;
+  var MAX=5,DELAYS=[2000,4000,8000,16000,32000];
+  document.addEventListener('error',function(e){
+    var img=e.target;
+    if(!img||img.tagName!=='IMG')return;
+    var liveSrc=img.getAttribute('src');
+    var src=img.dataset.haOriginalSrc||liveSrc;
+    if(!src)return;
+    if(img.dataset.haOriginalSrc&&liveSrc&&liveSrc!==img.dataset.haOriginalSrc&&liveSrc.indexOf('_r=')<0){src=liveSrc;img.dataset.haOriginalSrc=src;img.dataset.haRetryCount='0'}
+    else if(!img.dataset.haOriginalSrc){img.dataset.haOriginalSrc=src}
+    var attempt=parseInt(img.dataset.haRetryCount||'0',10);
+    if(img.dataset.haPhId){var old=document.getElementById(img.dataset.haPhId);if(old)old.remove()}
+    var ph=document.createElement('div');
+    ph.className='ha-img-placeholder'+(attempt>=MAX?' ha-failed':'');
+    ph.id='ha-ph-'+Math.random().toString(36).slice(2,9);
+    var w=img.getAttribute('width');var h=img.getAttribute('height');
+    if(w)ph.style.width=w+(isNaN(Number(w))?'':'px');
+    else if(img.style.width)ph.style.width=img.style.width;
+    else if(img.width>1)ph.style.width=img.width+'px';
+    if(h)ph.style.height=h+(isNaN(Number(h))?'':'px');
+    else if(img.style.height)ph.style.height=img.style.height;
+    else if(img.height>1)ph.style.height=img.height+'px';
+    ph.textContent=attempt>=MAX?'Image unavailable':'Loading image\u2026';
+    img.dataset.haPhId=ph.id;
+    if(img.dataset.haOrigDisplay==null)img.dataset.haOrigDisplay=img.style.display||'';
+    img.style.display='none';
+    img.insertAdjacentElement('afterend',ph);
+    if(attempt<MAX){
+      img.dataset.haRetryCount=String(attempt+1);
+      setTimeout(function(){
+        if(!img.isConnected)return;
+        if(img.dataset.haOriginalSrc!==src)return;
+        if(img.complete&&img.naturalWidth>0)return;
+        var curSrc=img.getAttribute('src');
+        if(curSrc&&curSrc.indexOf(src)!==0)return;
+        var fresh=src+(src.indexOf('?')>=0?'&':'?')+'_r='+(attempt+1)+'_'+Date.now();
+        img.src=fresh;
+      },DELAYS[attempt]);
+    }
+  },true);
+  document.addEventListener('load',function(e){
+    var img=e.target;
+    if(!img||img.tagName!=='IMG')return;
+    if(img.dataset.haPhId){
+      var ph=document.getElementById(img.dataset.haPhId);
+      if(ph)ph.remove();
+      delete img.dataset.haPhId;
+      img.style.display=img.dataset.haOrigDisplay||'';
+      delete img.dataset.haOrigDisplay;
+      delete img.dataset.haOriginalSrc;
+      delete img.dataset.haRetryCount;
+    }
+  },true);
+})();
+</script>
+</body>
 </html>
